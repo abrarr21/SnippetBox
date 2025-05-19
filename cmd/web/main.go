@@ -1,21 +1,41 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/abrarr21/snippet/pkg/mysql"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type application struct {
 	errorLog *log.Logger
 	infoLog  *log.Logger
+	snippets *mysql.SnippetModel
+}
+
+func openDB(dsn string) (*sql.DB, error) {
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = db.Ping(); err != nil {
+		return nil, err
+	}
+
+	return db, nil
 }
 
 func main() {
 	// Define a command-line flag "addr" with default value ":6969" and a help message.
 	// It returns a pointer to a string variable that will hold the value.
 	addr := flag.String("addr", ":6969", "HTTP network address")
+
+	dsn := flag.String("dsn", "web:pass@tcp(127.0.0.1:3306)/snippetbox?parseTime=true", "MySQL DSN")
 
 	// Parse the command-line flags provided by the user (e.g. -addr=":8080")
 	flag.Parse()
@@ -30,10 +50,18 @@ func main() {
 	// log.Lshortfile helps in quickly locating the source of an error in your code.
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
+	db, err := openDB(*dsn)
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+
+	defer db.Close()
+
 	// Initialize a new instance of application containing the dependencies
 	app := &application{
 		errorLog: errorLog,
 		infoLog:  infoLog,
+		snippets: &mysql.SnippetModel{DB: db},
 	}
 
 	srv := &http.Server{
@@ -48,7 +76,7 @@ func main() {
 
 	// *addr is also passed here to start the HTTP server on the specified address.
 	// The mux router is used to handle incoming HTTP requests.
-	err := srv.ListenAndServe()
+	err = srv.ListenAndServe()
 	errorLog.Fatal(err)
 
 	// start server: go run cmd/web/* -addr=":9999"
