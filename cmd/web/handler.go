@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
-	"html/template"
+	// "html/template"
 	"net/http"
 	"strconv"
+
+	"github.com/abrarr21/snippet/pkg/models"
 )
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
@@ -14,25 +16,35 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	files := []string{
-		"./ui/html/home.page.tmpl",
-		"./ui/html/base.layout.tmpl",
-		"./ui/html/footer.partial.tmpl",
-	}
+	// files := []string{
+	// 	"./ui/html/home.page.tmpl",
+	// 	"./ui/html/base.layout.tmpl",
+	// 	"./ui/html/footer.partial.tmpl",
+	// }
+	//
+	// ts, err := template.ParseFiles(files...)
+	// if err != nil {
+	// 	// app.errorLog.Println(err.Error())
+	// 	// http.Error(w, "Internal Server Error", 500)
+	// 	app.serverError(w, err) // using the serverError() helper function
+	// 	return
+	// }
+	//
+	// err = ts.Execute(w, nil)
+	// if err != nil {
+	// 	// app.errorLog.Println(err.Error())
+	// 	// http.Error(w, "Internal Server Error", 500)
+	// 	app.serverError(w, err) //serverError()
+	// }
 
-	ts, err := template.ParseFiles(files...)
+	s, err := app.snippets.Latest()
 	if err != nil {
-		// app.errorLog.Println(err.Error())
-		// http.Error(w, "Internal Server Error", 500)
-		app.serverError(w, err) // using the serverError() helper function
+		app.serverError(w, err)
 		return
 	}
 
-	err = ts.Execute(w, nil)
-	if err != nil {
-		// app.errorLog.Println(err.Error())
-		// http.Error(w, "Internal Server Error", 500)
-		app.serverError(w, err) //serverError()
+	for _, snippet := range s {
+		fmt.Fprintf(w, "%v\n", snippet)
 	}
 }
 
@@ -44,16 +56,35 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "Displaying the specific snippet with ID: %d", id)
+	s, err := app.snippets.Get(id)
+	if err == models.ErrNoRecord {
+		app.notFound(w)
+		return
+	} else if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	fmt.Fprintf(w, "%v", s)
 }
 
 func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
-		w.Header().Set("Allowed", "POST")
+		w.Header().Set("Allow", "POST")
 		// http.Error(w, "Method Not Allowed", 405)
-		app.clientError(w, http.StatusNotFound)
+		app.clientError(w, http.StatusMethodNotAllowed)
 		return
 	}
 
-	w.Write([]byte("Create a new Snippet"))
+	title := "This is the title"
+	content := "content of the snippet"
+	expires := "7"
+
+	id, err := app.snippets.Insert(title, content, expires)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/snippet?id=%d", id), http.StatusSeeOther)
 }
