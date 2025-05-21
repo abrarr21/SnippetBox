@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"runtime/debug"
@@ -31,8 +32,15 @@ func (app *application) render(w http.ResponseWriter, r *http.Request, name stri
 		return
 	}
 
-	err := ts.Execute(w, td)
+	// Initialize a new buffer
+	buf := new(bytes.Buffer)
+
+	// Write the template to the buffer, instead of straight to the http.ResponseWriter. If there's an error, call our serverError helper and return
+	err := ts.Execute(buf, td)
 	if err != nil {
 		app.serverError(w, err)
 	}
+
+	// Write the content of the buffer to the http.ResponseWriter. Again, this is another time where we pass our http.ResponseWriter to a function that takes an io.Writer
+	buf.WriteTo(w)
 }
