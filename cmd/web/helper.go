@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"runtime/debug"
+	"time"
 )
 
 // Logs Errors + Stack trace, shows user 500 error
@@ -25,6 +26,16 @@ func (app *application) notFound(w http.ResponseWriter) {
 	app.clientError(w, http.StatusNotFound)
 }
 
+// Create an addDefaultData helper. This takes a pointer to a templateData struct, adds the current year to the CurrentYear field, and then returns the pointer. Again, we're not using the *http.Request parameter at the moment, but we will do later in the book.
+func (app *application) addDefaultData(td *templateData, r *http.Request) *templateData {
+	if td == nil {
+		td = &templateData{}
+	}
+
+	td.CurrentYear = time.Now().Year()
+	return td
+}
+
 func (app *application) render(w http.ResponseWriter, r *http.Request, name string, td *templateData) {
 	ts, ok := app.templateCache[name]
 	if !ok {
@@ -36,7 +47,7 @@ func (app *application) render(w http.ResponseWriter, r *http.Request, name stri
 	buf := new(bytes.Buffer)
 
 	// Write the template to the buffer, instead of straight to the http.ResponseWriter. If there's an error, call our serverError helper and return
-	err := ts.Execute(buf, td)
+	err := ts.Execute(buf, app.addDefaultData(td, r)) // Execute the template set, passing the dynamic data with current year injected.
 	if err != nil {
 		app.serverError(w, err)
 	}
