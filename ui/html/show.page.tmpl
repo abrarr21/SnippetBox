@@ -8,8 +8,8 @@
 </div>
 <pre><code>{{.Snippet.Content}}</code></pre>
 <div class='metadata'>
-<time>Created: {{.Snippet.Created}}</time>
-<time>Expires: {{.Snippet.Expires}}</time>
+<time>Created: {{humanDate .Snippet.Created}}</time>
+<time>Expires: {{humanDate .Snippet.Expires}}</time>
 </div>
 </div>
 {{end}}
