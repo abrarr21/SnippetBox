@@ -7,14 +7,15 @@ import (
 	"strconv"
 
 	"github.com/abrarr21/snippet/pkg/models"
+	"github.com/go-chi/chi"
 )
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		// http.NotFound(w, r) --> replacing this with helper function to achieve centralized error handling
-		app.notFound(w) //notFound() helper
-		return
-	}
+	// if r.URL.Path != "/" {
+	// 	// http.NotFound(w, r) --> replacing this with helper function to achieve centralized error handling
+	// 	app.notFound(w) //notFound() helper
+	// 	return
+	// }
 
 	s, err := app.snippets.Latest()
 	if err != nil {
@@ -50,7 +51,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || id < 1 {
 		// http.NotFound(w, r)
 		app.notFound(w) // notFound() helper function
@@ -96,12 +97,12 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		w.Header().Set("Allow", "POST")
-		// http.Error(w, "Method Not Allowed", 405)
-		app.clientError(w, http.StatusMethodNotAllowed)
-		return
-	}
+	// if r.Method != "POST" {
+	// 	w.Header().Set("Allow", "POST")
+	// 	// http.Error(w, "Method Not Allowed", 405)
+	// 	app.clientError(w, http.StatusMethodNotAllowed)
+	// 	return
+	// }
 
 	title := "This is the title"
 	content := "content of the snippet"
@@ -113,5 +114,9 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/snippet?id=%d", id), http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/snippet/%d", id), http.StatusSeeOther)
+}
+
+func (app *application) createSnippetForm(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Hello this is the create snippet form"))
 }
