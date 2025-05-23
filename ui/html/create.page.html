@@ -1,0 +1,27 @@
+{{template "base" .}} {{define "title"}}Create a New Snippet{{end}} {{define
+"body"}}
+
+<form action="/snippet/create" method="POST">
+    <div>
+        <label>Title: </label>
+        <input type="text" name="title" />
+    </div>
+
+    <div>
+        <label>Content: </label>
+        <textarea type="text" name="content"></textarea>
+    </div>
+
+    <div>
+        <label>Delete in: </label>
+        <input type="radio" name="expires" value="365" checked /> One Year
+        <input type="radio" name="expires" value="7" checked /> One Week
+        <input type="radio" name="expires" value="1" checked /> One Day
+    </div>
+
+    <div>
+        <input type="submit" value="Publish Snippet" />
+    </div>
+</form>
+
+{{end}}
