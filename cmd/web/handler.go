@@ -47,7 +47,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	// }
 
 	//Use the new render helper to replace above commented code
-	app.render(w, r, "home.page.tmpl", &templateData{Snippets: s})
+	app.render(w, r, "home.page.html", &templateData{Snippets: s})
 }
 
 func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
@@ -93,7 +93,7 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 	// fmt.Fprintf(w, "%v", s)
 
 	// Use the render helper to replace above commented code
-	app.render(w, r, "show.page.tmpl", &templateData{Snippet: s})
+	app.render(w, r, "show.page.html", &templateData{Snippet: s})
 }
 
 func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
@@ -118,5 +118,5 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) createSnippetForm(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello this is the create snippet form"))
+	app.render(w, r, "create.page.html", nil)
 }

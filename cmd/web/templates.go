@@ -27,7 +27,7 @@ func newTemplateCache(dir string) (map[string]*template.Template, error) {
 	cache := map[string]*template.Template{}
 
 	//Use the filepath.Glob function to get a slice of all the filepaths with the extension '.page.tmpl'. This essentially gives us a slice of all the 'page' templates for the application.
-	pages, err := filepath.Glob(filepath.Join(dir, "*.page.tmpl"))
+	pages, err := filepath.Glob(filepath.Join(dir, "*.page.html"))
 	if err != nil {
 		return nil, err
 	}
@@ -44,13 +44,13 @@ func newTemplateCache(dir string) (map[string]*template.Template, error) {
 		}
 
 		// use the ParseGlob method to add any 'layout' template to the template set (in our case, it's just the 'footer' layout at the moment.)
-		ts, err = ts.ParseGlob(filepath.Join(dir, "*.layout.tmpl"))
+		ts, err = ts.ParseGlob(filepath.Join(dir, "*.layout.html"))
 		if err != nil {
 			return nil, err
 		}
 
 		// use the ParseGlob method to add any 'partial' template to the template set (in our case, it's just the 'footer' layout at the moment.)
-		ts, err = ts.ParseGlob(filepath.Join(dir, "*.partial.tmpl"))
+		ts, err = ts.ParseGlob(filepath.Join(dir, "*.partial.html"))
 		if err != nil {
 			return nil, err
 		}
