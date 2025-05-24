@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"strings"
+	"unicode/utf8"
+
 	// "html/template"
 	"net/http"
 	"strconv"
@@ -104,9 +107,46 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 	// 	return
 	// }
 
-	title := "This is the title"
-	content := "content of the snippet"
-	expires := "7"
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	title := r.PostForm.Get("title")
+	content := r.PostForm.Get("content")
+	expires := r.PostForm.Get("expires")
+
+	// Initialize a map to hold any validation error
+	errors := make(map[string]string)
+
+	// Title Validation
+	if strings.TrimSpace(title) == "" {
+		errors["title"] = "-- This field cannot be blank --"
+	} else if utf8.RuneCountInString(title) > 100 {
+		errors["title"] = "-- This field is too long (Max 100 chars.) --"
+	}
+
+	//Content validation
+	if strings.TrimSpace(content) == "" {
+		errors["content"] = "- Content Filed cannot be blank -"
+	}
+
+	// Expires field validation
+	if strings.TrimSpace(expires) == "" {
+		errors["expires"] = "- Expires field cannot be blank -"
+	} else if expires != "365" && expires != "7" && expires != "1" {
+		errors["expires"] = "- Expires field is invalid -"
+	}
+
+	// If there are any validation errors, re-display the create.page.html template passing in the validation errors and previously submitted r.PostForm data.
+	if len(errors) > 0 {
+		app.render(w, r, "create.page.html", &templateData{
+			FormData:   r.PostForm,
+			FormErrors: errors,
+		})
+		return
+	}
 
 	id, err := app.snippets.Insert(title, content, expires)
 	if err != nil {
