@@ -19,6 +19,13 @@ func (app *application) routes() http.Handler {
 	r.Post("/snippet/create", app.createSnippet)
 	r.Get("/snippet/create", app.createSnippetForm)
 
+	// Auth routes
+	r.Get("/user/signup", app.signupUserForm)
+	r.Post("/user/signup", app.signupUser)
+	r.Get("/user/login", app.loginUserForm)
+	r.Post("/user/login", app.loginUser)
+	r.Post("/user/logout", app.logoutUser)
+
 	// Create a file server which serves the files out of the "./ui/static/" directory.
 	// Note that the path given to the http.Dir function is relative to the project's directory root.
 	fileServer := http.FileServer(http.Dir("./ui/static/"))

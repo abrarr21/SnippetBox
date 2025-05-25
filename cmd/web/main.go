@@ -20,6 +20,7 @@ type application struct {
 	snippets      *mysql.SnippetModel
 	templateCache map[string]*template.Template
 	session       *scs.SessionManager
+	users         *mysql.UserModel
 }
 
 func openDB(dsn string) (*sql.DB, error) {
@@ -77,9 +78,10 @@ func main() {
 	app := &application{
 		errorLog:      errorLog,
 		infoLog:       infoLog,
-		snippets:      &mysql.SnippetModel{DB: db},
+		snippets:      &mysql.SnippetModel{DB: db}, // (create a new SnippetModel struct and set its DB field to your DB connection and & ->returns a pointer to that struct )
 		templateCache: templateCache,
 		session:       sessionManager, // And add the session manager to our application dependencies.
+		users:         &mysql.UserModel{DB: db},
 	}
 
 	srv := &http.Server{
