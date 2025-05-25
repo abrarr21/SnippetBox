@@ -2,17 +2,16 @@ package main
 
 import (
 	"html/template"
-	"net/url"
 	"path/filepath"
 	"time"
 
+	"github.com/abrarr21/snippet/pkg/forms"
 	"github.com/abrarr21/snippet/pkg/models"
 )
 
 type templateData struct {
 	CurrentYear int
-	FormData    url.Values        // holds any previously submitted data
-	FormErrors  map[string]string // holds any validation errors
+	Form        *forms.Form
 	Snippet     *models.Snippet
 	Snippets    []*models.Snippet
 }

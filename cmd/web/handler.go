@@ -2,52 +2,21 @@ package main
 
 import (
 	"fmt"
-	"strings"
-	"unicode/utf8"
-
-	// "html/template"
 	"net/http"
 	"strconv"
 
+	"github.com/abrarr21/snippet/pkg/forms"
 	"github.com/abrarr21/snippet/pkg/models"
 	"github.com/go-chi/chi"
 )
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
-	// if r.URL.Path != "/" {
-	// 	// http.NotFound(w, r) --> replacing this with helper function to achieve centralized error handling
-	// 	app.notFound(w) //notFound() helper
-	// 	return
-	// }
 
 	s, err := app.snippets.Latest()
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
-
-	// data := &templateData{Snippets: s}
-	//
-	// files := []string{
-	// 	"./ui/html/home.page.tmpl",
-	// 	"./ui/html/base.layout.tmpl",
-	// 	"./ui/html/footer.partial.tmpl",
-	// }
-	//
-	// ts, err := template.ParseFiles(files...)
-	// if err != nil {
-	// 	app.serverError(w, err)
-	// 	return
-	// }
-	//
-	// err = ts.Execute(w, data)
-	// if err != nil {
-	// 	app.serverError(w, err)
-	// }
-	//
-	// for _, snippet := range s {
-	// 	fmt.Fprintf(w, "%v\n", snippet)
-	// }
 
 	//Use the new render helper to replace above commented code
 	app.render(w, r, "home.page.html", &templateData{Snippets: s})
@@ -70,42 +39,11 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// data := &templateData{Snippet: s}
-	//
-	// files := []string{
-	// 	"./ui/html/show.page.tmpl",
-	// 	"./ui/html/base.layout.tmpl",
-	// 	"./ui/html/footer.partial.tmpl",
-	// }
-	//
-	// ts, err := template.ParseFiles(files...)
-	// if err != nil {
-	// 	// app.errorLog.Println(err.Error())
-	// 	// http.Error(w, "Internal Server Error", 500)
-	// 	app.serverError(w, err) // using the serverError() helper function
-	// 	return
-	// }
-	//
-	// err = ts.Execute(w, data)
-	// if err != nil {
-	// 	// app.errorLog.Println(err.Error())
-	// 	// http.Error(w, "Internal Server Error", 500)
-	// 	app.serverError(w, err) //serverError()
-	// }
-	//
-	// fmt.Fprintf(w, "%v", s)
-
 	// Use the render helper to replace above commented code
 	app.render(w, r, "show.page.html", &templateData{Snippet: s})
 }
 
 func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
-	// if r.Method != "POST" {
-	// 	w.Header().Set("Allow", "POST")
-	// 	// http.Error(w, "Method Not Allowed", 405)
-	// 	app.clientError(w, http.StatusMethodNotAllowed)
-	// 	return
-	// }
 
 	err := r.ParseForm()
 	if err != nil {
@@ -113,42 +51,19 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	title := r.PostForm.Get("title")
-	content := r.PostForm.Get("content")
-	expires := r.PostForm.Get("expires")
+	// Create a new forms.Form struct containing the POSTed data from the form, then use the validation methods to check the content.
+	form := forms.New(r.PostForm)
+	form.Required("title", "content", "expires")
+	form.MaxLength("title", 100)
+	form.PermittedValues("expires", "365", "7", "1")
 
-	// Initialize a map to hold any validation error
-	errors := make(map[string]string)
-
-	// Title Validation
-	if strings.TrimSpace(title) == "" {
-		errors["title"] = "-- This field cannot be blank --"
-	} else if utf8.RuneCountInString(title) > 100 {
-		errors["title"] = "-- This field is too long (Max 100 chars.) --"
-	}
-
-	//Content validation
-	if strings.TrimSpace(content) == "" {
-		errors["content"] = "- Content Filed cannot be blank -"
-	}
-
-	// Expires field validation
-	if strings.TrimSpace(expires) == "" {
-		errors["expires"] = "- Expires field cannot be blank -"
-	} else if expires != "365" && expires != "7" && expires != "1" {
-		errors["expires"] = "- Expires field is invalid -"
-	}
-
-	// If there are any validation errors, re-display the create.page.html template passing in the validation errors and previously submitted r.PostForm data.
-	if len(errors) > 0 {
-		app.render(w, r, "create.page.html", &templateData{
-			FormData:   r.PostForm,
-			FormErrors: errors,
-		})
+	if !form.Valid() {
+		app.render(w, r, "create.page.html", &templateData{Form: form})
 		return
 	}
 
-	id, err := app.snippets.Insert(title, content, expires)
+	// Because the form data (with type url.Values) has been anonymously embedded in the form.Form struct, we can use the Get() method to retrieve the validated value for a particular form field.
+	id, err := app.snippets.Insert(form.Get("title"), form.Get("content"), form.Get("expires"))
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -158,5 +73,8 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) createSnippetForm(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, "create.page.html", nil)
+	app.render(w, r, "create.page.html", &templateData{
+		// Pass a new empty form.Form object to the template
+		Form: forms.New(nil),
+	})
 }
