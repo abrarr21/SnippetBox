@@ -33,7 +33,18 @@ func (app *application) addDefaultData(td *templateData, r *http.Request) *templ
 	}
 
 	td.CurrentYear = time.Now().Year()
+	td.Flash = app.popFlash(r) // Used popFlash helper function here.
 	return td
+}
+
+// this function is creaetd for removing flash message
+func (app *application) popFlash(r *http.Request) string {
+	flash := app.session.GetString(r.Context(), "flash")
+	if flash != "" {
+		app.session.Remove(r.Context(), "flash")
+	}
+
+	return flash
 }
 
 func (app *application) render(w http.ResponseWriter, r *http.Request, name string, td *templateData) {

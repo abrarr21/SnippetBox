@@ -7,8 +7,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/abrarr21/snippet/pkg/mysql"
+	"github.com/alexedwards/scs/v2"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -17,6 +19,7 @@ type application struct {
 	infoLog       *log.Logger
 	snippets      *mysql.SnippetModel
 	templateCache map[string]*template.Template
+	session       *scs.SessionManager
 }
 
 func openDB(dsn string) (*sql.DB, error) {
@@ -65,18 +68,24 @@ func main() {
 		errorLog.Fatal(err)
 	}
 
+	// Initialize a session manager.
+	sessionManager := scs.New()
+	sessionManager.Lifetime = 12 * time.Hour
+	sessionManager.Cookie.HttpOnly = true
+
 	// Initialize a new instance of application containing the dependencies
 	app := &application{
 		errorLog:      errorLog,
 		infoLog:       infoLog,
 		snippets:      &mysql.SnippetModel{DB: db},
 		templateCache: templateCache,
+		session:       sessionManager, // And add the session manager to our application dependencies.
 	}
 
 	srv := &http.Server{
 		Addr:     *addr,
 		ErrorLog: errorLog,
-		Handler:  app.routes(), // mux -> app.routes()
+		Handler:  sessionManager.LoadAndSave(app.routes()), //wrapped every route for session handling -->  mux -> app.routes()
 	}
 
 	// *addr dereferences the flag pointer to get the actual address string (e.g., ":6969")

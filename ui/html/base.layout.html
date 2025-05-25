@@ -19,7 +19,11 @@
             <a href="/">Home</a>
             <a href="/snippet/create">Create Snippet</a>
         </nav>
-        <section>{{template "body" .}}</section>
+        <section>
+            {{with .Flash}}
+            <div class="flash">{{.}}</div>
+            {{end}} {{template "body" .}}
+        </section>
         {{template "footer" .}}
 
         <script src="/static/js/main.js" type="text/javascript"></script>
