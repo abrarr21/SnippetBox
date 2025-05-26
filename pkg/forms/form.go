@@ -3,9 +3,13 @@ package forms
 import (
 	"fmt"
 	"net/url"
+	"regexp"
 	"strings"
 	"unicode/utf8"
 )
+
+// Use the regexp.MustCompile() function to parse a pattern and compile a regular expression for sanity checking the format of an email address. This returns a *regexp.Regexp object, or panics in the event of an error. Doing this once at runtime, and storing the compiled regular expression object in a variable, is more performant than re-compiling the pattern with every request.
+var EmailRX = regexp.MustCompile(`^[a-zA-Z0-9.!#$%&'*+/=?^_` + "`" + `{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$`)
 
 // Create a custom Form struct, which anonymously embeds a url.Values object (to hold the form data) and an Errors field to hold any validation errors for the form data.
 type Form struct {
@@ -52,6 +56,28 @@ func (f *Form) PermittedValues(field string, opts ...string) {
 	}
 
 	f.Errors.Add(field, "This field is invalid")
+}
+
+func (f *Form) MinLength(field string, d int) {
+	value := f.Get(field)
+	if value == "" {
+		return
+	}
+
+	if utf8.RuneCountInString(value) < d {
+		f.Errors.Add(field, fmt.Sprintf("Too Short: (Min %d chars)", d))
+	}
+}
+
+func (f *Form) MatchesPattern(field string, pattern *regexp.Regexp) {
+	value := f.Get(field)
+	if value == "" {
+		return
+	}
+
+	if !pattern.MatchString(value) {
+		f.Errors.Add(field, "This field is invalid")
+	}
 }
 
 func (f *Form) Valid() bool {
