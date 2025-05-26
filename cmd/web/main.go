@@ -73,6 +73,7 @@ func main() {
 	sessionManager := scs.New()
 	sessionManager.Lifetime = 12 * time.Hour
 	sessionManager.Cookie.HttpOnly = true
+	sessionManager.Cookie.SameSite = http.SameSiteStrictMode
 
 	// Initialize a new instance of application containing the dependencies
 	app := &application{
@@ -87,7 +88,7 @@ func main() {
 	srv := &http.Server{
 		Addr:     *addr,
 		ErrorLog: errorLog,
-		Handler:  sessionManager.LoadAndSave(app.routes()), //wrapped every route for session handling -->  mux -> app.routes()
+		Handler:  app.routes(),
 	}
 
 	// *addr dereferences the flag pointer to get the actual address string (e.g., ":6969")

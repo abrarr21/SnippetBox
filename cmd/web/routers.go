@@ -4,36 +4,37 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
-	"github.com/justinas/alice"
 )
 
 func (app *application) routes() http.Handler {
+	router := chi.NewRouter()
 
-	// using "justinas/alice package for better middleware chaining"
-	standardMiddleware := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
+	router.Use(app.recoverPanic)
+	router.Use(app.logRequest)
+	router.Use(secureHeaders)
+	router.Use(app.session.LoadAndSave)
 
-	r := chi.NewRouter()
+	//Public routes
+	router.Get("/", app.home)
+	router.Get("/snippet/{id}", app.showSnippet)
 
-	r.Get("/", app.home)
-	r.Get("/snippet/{id}", app.showSnippet)
-	r.Post("/snippet/create", app.createSnippet)
-	r.Get("/snippet/create", app.createSnippetForm)
+	//Auth-only Routes
+	router.Group(func(r chi.Router) {
+		r.Use(app.requireAuthenticatedUser)
+		r.Get("/snippet/create", app.createSnippetForm)
+		r.Post("/snippet/create", app.createSnippet)
+		r.Post("/user/logout", app.logoutUser)
+	})
 
-	// Auth routes
-	r.Get("/user/signup", app.signupUserForm)
-	r.Post("/user/signup", app.signupUser)
-	r.Get("/user/login", app.loginUserForm)
-	r.Post("/user/login", app.loginUser)
-	r.Post("/user/logout", app.logoutUser)
+	//Auth routes
+	router.Get("/user/signup", app.signupUserForm)
+	router.Post("/user/signup", app.signupUser)
+	router.Get("/user/login", app.loginUserForm)
+	router.Post("/user/login", app.loginUser)
 
-	// Create a file server which serves the files out of the "./ui/static/" directory.
-	// Note that the path given to the http.Dir function is relative to the project's directory root.
-	fileServer := http.FileServer(http.Dir("./ui/static/"))
+	//Static files
+	fileServer := http.FileServer(http.Dir("./ui/static"))
+	router.Handle("/static/", http.StripPrefix("/static", fileServer))
 
-	// Use the mux.Handle() function to register the file server as the handler
-	// all URL paths that start with /static/. For matching paths, we strip the "/static" prefix before the request reaches the server.
-	r.Handle("/static/", http.StripPrefix("/static", fileServer))
-
-	// return app.recoverPanic(app.logRequest(secureHeaders(mux)))
-	return standardMiddleware.Then(r)
+	return router
 }

@@ -32,6 +32,7 @@ func (app *application) addDefaultData(td *templateData, r *http.Request) *templ
 		td = &templateData{}
 	}
 
+	td.AuthenticatedUser = app.authenticatedUser(r)
 	td.CurrentYear = time.Now().Year()
 	td.Flash = app.popFlash(r) // Used popFlash helper function here.
 	return td
@@ -65,4 +66,9 @@ func (app *application) render(w http.ResponseWriter, r *http.Request, name stri
 
 	// Write the content of the buffer to the http.ResponseWriter. Again, this is another time where we pass our http.ResponseWriter to a function that takes an io.Writer
 	buf.WriteTo(w)
+}
+
+func (app *application) authenticatedUser(r *http.Request) int {
+	return app.session.GetInt(r.Context(), "userID")
+	//User login hai, toh session mein userID hoga, aur GetInt uska int return karega. Agar user login nahi hai ya userID galat type ka hai (not int), toh GetInt() 0 return karega.
 }
