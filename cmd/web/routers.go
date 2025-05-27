@@ -13,6 +13,7 @@ func (app *application) routes() http.Handler {
 	router.Use(app.logRequest)
 	router.Use(secureHeaders)
 	router.Use(app.session.LoadAndSave)
+	router.Use(app.authenticate)
 
 	//Public routes
 	router.Get("/", app.home)

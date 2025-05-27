@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"runtime/debug"
 	"time"
+
+	"github.com/abrarr21/snippet/pkg/models"
 )
 
 // Logs Errors + Stack trace, shows user 500 error
@@ -68,7 +70,10 @@ func (app *application) render(w http.ResponseWriter, r *http.Request, name stri
 	buf.WriteTo(w)
 }
 
-func (app *application) authenticatedUser(r *http.Request) int {
-	return app.session.GetInt(r.Context(), "userID")
-	//User login hai, toh session mein userID hoga, aur GetInt uska int return karega. Agar user login nahi hai ya userID galat type ka hai (not int), toh GetInt() 0 return karega.
+func (app *application) authenticatedUser(r *http.Request) *models.User {
+	user, ok := r.Context().Value(contextKeyUser).(*models.User)
+	if !ok {
+		return nil
+	}
+	return user
 }

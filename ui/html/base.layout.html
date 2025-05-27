@@ -25,7 +25,7 @@
             <div>
                 {{if .AuthenticatedUser}}
                 <form action="/user/logout" method="POST">
-                    <button>Logout</button>
+                    <button>Logout ({{.AuthenticatedUser.Name}})</button>
                 </form>
                 {{else}}
                 <a href="/user/signup">SignUp</a>
